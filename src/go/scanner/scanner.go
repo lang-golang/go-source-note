@@ -28,9 +28,10 @@ type ErrorHandler func(pos token.Position, msg string)
 // A Scanner holds the scanner's internal state while processing
 // a given text. It can be allocated as part of another data
 // structure but must be initialized via Init before use.
+// 它可以作为另一个数据结构的一部分进行分配，但在使用之前必须通过Init进行初始化。
 //
 type Scanner struct {
-	// immutable state
+	// immutable(不可改变的;永恒不变的) state
 	file *token.File  // source file handle
 	dir  string       // directory portion of file.Name()
 	src  []byte       // source
@@ -48,7 +49,7 @@ type Scanner struct {
 	ErrorCount int // number of errors encountered
 }
 
-const bom = 0xFEFF // byte order mark, only permitted as very first character
+const bom = 0xFEFF // byte order mark, only permitted as very first character 字节顺序标记，仅允许作为第一个字符
 
 // Read the next Unicode char into s.ch.
 // s.ch < 0 means end-of-file.
@@ -101,7 +102,7 @@ type Mode uint
 
 const (
 	ScanComments    Mode = 1 << iota // return comments as COMMENT tokens
-	dontInsertSemis                  // do not automatically insert semicolons - for testing only
+	dontInsertSemis                  // do not automatically insert semicolons(分号) - for testing only
 )
 
 // Init prepares the scanner s to tokenize the text src by setting the

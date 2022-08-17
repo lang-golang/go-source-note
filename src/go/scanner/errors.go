@@ -13,7 +13,7 @@ import (
 
 // In an ErrorList, an error is represented by an *Error.
 // The position Pos, if valid, points to the beginning of
-// the offending token, and the error condition is described
+// the offending(违法的) token, and the error condition is described
 // by Msg.
 //
 type Error struct {
@@ -46,7 +46,7 @@ func (p *ErrorList) Reset() { *p = (*p)[0:0] }
 
 // ErrorList implements the sort Interface.
 func (p ErrorList) Len() int      { return len(p) }
-func (p ErrorList) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+func (p ErrorList) Swap(i, j int) { p[i], p[j] = p[j], p[i] } // Tag: 交换方式
 
 func (p ErrorList) Less(i, j int) bool {
 	e := &p[i].Pos
@@ -75,6 +75,7 @@ func (p ErrorList) Sort() {
 }
 
 // RemoveMultiples sorts an ErrorList and removes all but the first error per line.
+// Tag：不用使用多余的内存空间
 func (p *ErrorList) RemoveMultiples() {
 	sort.Sort(p)
 	var last token.Position // initial last.Line is != any legal error line

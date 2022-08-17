@@ -17,6 +17,7 @@ import (
 // Value is a value that drivers must be able to handle.
 // It is either nil, a type handled by a database driver's NamedValueChecker
 // interface, or an instance of one of these types:
+// 它要么是nil、由数据库驱动程序的NamedValueChecker接口处理的类型，要么是以下类型之一的实例：
 //
 //   int64
 //   float64
@@ -36,10 +37,10 @@ type NamedValue struct {
 	// If the Name is not empty it should be used for the parameter identifier and
 	// not the ordinal position.
 	//
-	// Name will not have a symbol prefix.
+	// Name will not have a symbol prefix. 没有符号前缀
 	Name string
 
-	// Ordinal position of the parameter starting from one and is always set.
+	// Ordinal position of the parameter starting from one and is always set. 参数的顺序位置从一开始，并始终设置。
 	Ordinal int
 
 	// Value is the parameter value.
@@ -80,6 +81,7 @@ type DriverContext interface {
 // A Connector represents a driver in a fixed configuration
 // and can create any number of equivalent Conns for use
 // by multiple goroutines.
+// 连接器代表固定配置中的驱动程序，可以创建任意数量的等效连接器，供多个Goroutine使用。
 //
 // A Connector can be passed to sql.OpenDB, to allow drivers
 // to implement their own sql.DB constructors, or returned by
@@ -111,6 +113,7 @@ type Connector interface {
 // package should continue as if the optional interface was not
 // implemented. ErrSkip is only supported where explicitly
 // documented.
+// 一些可选接口的方法可能会返回ErrSkip，以在运行时指示快速路径不可用，并且sql包应该继续，就好像没有实现可选接口一样。只有在明确记录的情况下才支持ErrSkip
 var ErrSkip = errors.New("driver: skip fast-path; continue as if unimplemented")
 
 // ErrBadConn should be returned by a driver to signal to the sql
@@ -122,12 +125,14 @@ var ErrSkip = errors.New("driver: skip fast-path; continue as if unimplemented")
 // if there's a possibility that the database server might have
 // performed the operation. Even if the server sends back an error,
 // you shouldn't return ErrBadConn.
+// 为了防止重复操作，如果数据库服务器可能执行了该操作，则不应返回ErrBadConn。即使服务器发回错误，也不应该返回ErrBadConn。
 var ErrBadConn = errors.New("driver: bad connection")
 
 // Pinger is an optional interface that may be implemented by a Conn.
 //
 // If a Conn does not implement Pinger, the sql package's DB.Ping and
 // DB.PingContext will check if there is at least one Conn available.
+// 如果Conn未实现Pinger，则sql包的DB.Ping和DB.PingContext将检查是否至少有一个Conn可用。
 //
 // If Conn.Ping returns ErrBadConn, DB.Ping and DB.PingContext will remove
 // the Conn from pool.
@@ -158,6 +163,7 @@ type Execer interface {
 // ExecerContext may return ErrSkip.
 //
 // ExecerContext must honor the context timeout and return when the context is canceled.
+// 必须遵守上下文超时，并在取消上下文时返回。
 type ExecerContext interface {
 	ExecContext(ctx context.Context, query string, args []NamedValue) (Result, error)
 }
@@ -190,9 +196,9 @@ type QueryerContext interface {
 }
 
 // Conn is a connection to a database. It is not used concurrently
-// by multiple goroutines.
+// by multiple goroutines. 它不能同时被多个协程使用
 //
-// Conn is assumed to be stateful.
+// Conn is assumed to be stateful. 被认为是有状态的
 type Conn interface {
 	// Prepare returns a prepared statement, bound to this connection.
 	Prepare(query string) (Stmt, error)
@@ -200,11 +206,13 @@ type Conn interface {
 	// Close invalidates and potentially stops any current
 	// prepared statements and transactions, marking this
 	// connection as no longer in use.
+	// Close 使任何当前准备的语句和事务无效并可能停止，从而将此连接标记为不再使用。
 	//
 	// Because the sql package maintains a free pool of
 	// connections and only calls Close when there's a surplus of
 	// idle connections, it shouldn't be necessary for drivers to
 	// do their own connection caching.
+	// 因为sql包维护一个空闲的连接池，并且只有在空闲连接过剩时才会关闭调用，所以驱动程序不必自己进行连接缓存。
 	Close() error
 
 	// Begin starts and returns a new transaction.
@@ -257,10 +265,11 @@ type ConnBeginTx interface {
 type SessionResetter interface {
 	// ResetSession is called while a connection is in the connection
 	// pool. No queries will run on this connection until this method returns.
+	// ResetSession会在连接在连接池中时调用。在该方法返回之前，不会在此连接上运行任何查询。
 	//
 	// If the connection is bad this should return driver.ErrBadConn to prevent
-	// the connection from being returned to the connection pool. Any other
-	// error will be discarded.
+	// the connection from being returned to the connection pool. 防止连接返回到连接池
+	// Any other error will be discarded. 任何其他错误都将被丢弃。
 	ResetSession(ctx context.Context) error
 }
 
@@ -335,11 +344,14 @@ var ErrRemoveArgument = errors.New("driver: remove argument from query")
 
 // NamedValueChecker may be optionally implemented by Conn or Stmt. It provides
 // the driver more control to handle Go and database types beyond the default
-// Values types allowed.
+// Values types allowed. 它为驱动程序提供了更多控制，以处理超出允许的默认值类型的Go和数据库类型。
 //
 // The sql package checks for value checkers in the following order,
-// stopping at the first found match: Stmt.NamedValueChecker, Conn.NamedValueChecker,
-// Stmt.ColumnConverter, DefaultParameterConverter.
+// stopping at the first found match: sql包按以下顺序检查值检查器，并在找到的第一个匹配项处停止。
+// Stmt.NamedValueChecker,
+// Conn.NamedValueChecker,
+// Stmt.ColumnConverter,
+// DefaultParameterConverter.
 //
 // If CheckNamedValue returns ErrRemoveArgument, the NamedValue will not be included in
 // the final query arguments. This may be used to pass special options to
@@ -350,8 +362,10 @@ var ErrRemoveArgument = errors.New("driver: remove argument from query")
 // they have exhausted their own special cases.
 type NamedValueChecker interface {
 	// CheckNamedValue is called before passing arguments to the driver
-	// and is called in place of any ColumnConverter. CheckNamedValue must do type
-	// validation and conversion as appropriate for the driver.
+	// and is called in place of any ColumnConverter.
+	// CheckNamedValue在将参数传递给驱动程序之前被调用，并代替任何ColumnConverter被调用。
+	// CheckNamedValue must do type validation and conversion as appropriate for the driver.
+	// CheckNamedValue必须对驱动程序进行适当的类型验证和转换。
 	CheckNamedValue(*NamedValue) error
 }
 
@@ -374,6 +388,7 @@ type Rows interface {
 	// columns of the result is inferred from the length of the
 	// slice. If a particular column name isn't known, an empty
 	// string should be returned for that entry.
+	// Columns返回列的名称。结果的列数是根据切片的长度推断出来的。如果某个特定的列名未知，则应该为该条目返回一个空字符串
 	Columns() []string
 
 	// Close closes the rows iterator.
@@ -382,6 +397,7 @@ type Rows interface {
 	// Next is called to populate the next row of data into
 	// the provided slice. The provided slice will be the same
 	// size as the Columns() are wide.
+	// 调用Next将下一行数据填充到提供的切片中。提供的切片大小将与列（）的宽度相同。
 	//
 	// Next should return io.EOF when there are no more rows.
 	//
@@ -393,6 +409,7 @@ type Rows interface {
 
 // RowsNextResultSet extends the Rows interface by providing a way to signal
 // the driver to advance to the next result set.
+// RowsNextResultSet 通过提供一种向驱动程序发出前进到下一个结果集的信号的方式来扩展Rows接口。
 type RowsNextResultSet interface {
 	Rows
 

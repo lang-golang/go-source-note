@@ -206,13 +206,13 @@ func driverArgsConnLocked(ci driver.Conn, ds *driverStmt, args []interface{}) ([
 }
 
 // convertAssign is the same as convertAssignRows, but without the optional
-// rows argument.
+// rows argument.  转换 + 分配
 func convertAssign(dest, src interface{}) error {
 	return convertAssignRows(dest, src, nil)
 }
 
 // convertAssignRows copies to dest the value in src, converting it if possible.
-// An error is returned if the copy would result in loss of information.
+// An error is returned if the copy would result in loss of information.  如果Copy会导致信息丢失，则返回错误
 // dest should be a pointer type. If rows is passed in, the rows will
 // be used as the parent for any cursor values converted from a
 // driver.Rows to a *Rows.
@@ -559,10 +559,13 @@ func callValuerValue(vr driver.Valuer) (v driver.Value, err error) {
 	return vr.Value()
 }
 
-// decimal composes or decomposes a decimal value to and from individual parts.
-// There are four parts: a boolean negative flag, a form byte with three possible states
-// (finite=0, infinite=1, NaN=2), a base-2 big-endian integer
-// coefficient (also known as a significand) as a []byte, and an int32 exponent.
+// decimal(十进制) composes(组成) or decomposes(分解) a decimal value to and from individual parts.
+//
+// There are four parts:
+//     a boolean negative flag,
+//     a form byte with three possible states (finite(有限的)=0, infinite(极大的)=1, NaN=2), NaN (Not a Number)未定义或不可表示的值
+//     a base-2 big-endian integer coefficient(系数) (also known as a significand) as a []byte, 一个以2为基数的大端整数系数（也称为有效位）
+//     and an int32 exponent. 指数、幂
 // These are composed into a final value as "decimal = (neg) (form=finite) coefficient * 10 ^ exponent".
 // A zero length coefficient is a zero value.
 // The big-endian integer coefficent stores the most significant byte first (at coefficent[0]).

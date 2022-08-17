@@ -67,11 +67,16 @@ var ErrNoProgress = errors.New("multiple Read calls return no data or error")
 // considering the error err. Doing so correctly handles I/O errors
 // that happen after reading some bytes and also both of the
 // allowed EOF behaviors.
+// 调用者在考虑错误之前应当首先处理返回的数据。
+// 这样做可以正确地处理在读取一些字节后产生的 I/O 错误，
+// 同时允许EOF的出现。
 //
 // Implementations of Read are discouraged from returning a
 // zero byte count with a nil error, except when len(p) == 0.
 // Callers should treat a return of 0 and nil as indicating that
 // nothing happened; in particular it does not indicate EOF.
+// 不鼓励Read的实现返零字节计数+带有nil错误，len（p）==0时除外。
+// 调用方应将返回值0和nil视为什么也没发生；特别是，它不表示EOF。
 //
 // Implementations must not retain p.
 type Reader interface {

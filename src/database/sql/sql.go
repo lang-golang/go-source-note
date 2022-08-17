@@ -75,9 +75,11 @@ func Drivers() []string {
 // A NamedArg is a named argument. NamedArg values may be used as
 // arguments to Query or Exec and bind to the corresponding named
 // parameter in the SQL statement.
+// 一个 NamedArg 就是一个具名参数。 NamedArg 的值可以用作 Query 或者 Exec 的参数， 并与 SQL 语句中相应的具名参数进行绑定。
 //
 // For a more concise way to create NamedArg values, see
 // the Named function.
+// 通过 Named 函数可以更方便地创建 NamedArg 值。
 type NamedArg struct {
 	_Named_Fields_Required struct{}
 
@@ -85,17 +87,21 @@ type NamedArg struct {
 	//
 	// If empty, the ordinal position in the argument list will be
 	// used.
+	// 如为空，那么根据参数列表中的排列位置进行设置
 	//
 	// Name must omit any symbol prefix.
+	// Name 必须省略所有符号前缀
 	Name string
 
 	// Value is the value of the parameter.
 	// It may be assigned the same value types as the query
 	// arguments.
+	// 这个参数可能会被设置为与查询参数具有相同的值类型
 	Value interface{}
 }
 
 // Named provides a more concise way to create NamedArg values.
+// Named 提供了一种更为方便的创建 NamedArg 值的方法。
 //
 // Example usage:
 //
@@ -116,10 +122,12 @@ func Named(name string, value interface{}) NamedArg {
 }
 
 // IsolationLevel is the transaction isolation level used in TxOptions.
+// IsolationLevel 是用于 TxOptions 的事务隔离级别
 type IsolationLevel int
 
 // Various isolation levels that drivers may support in BeginTx.
 // If a driver does not support a given isolation level an error may be returned.
+// 不同驱动在 BeginTx 中对隔离级别的支持也是不同的, 如果一个驱动不支持给定的隔离级别, 那么 BeginTx 将返回一个错误
 //
 // See https://en.wikipedia.org/wiki/Isolation_(database_systems)#Isolation_levels.
 const (
@@ -157,7 +165,7 @@ func (i IsolationLevel) String() string {
 	}
 }
 
-var _ fmt.Stringer = LevelDefault
+var _ fmt.Stringer = LevelDefault		// TODO: 干嘛的？
 
 // TxOptions holds the transaction options to be used in DB.BeginTx.
 type TxOptions struct {
@@ -168,8 +176,11 @@ type TxOptions struct {
 }
 
 // RawBytes is a byte slice that holds a reference to memory owned by
-// the database itself. After a Scan into a RawBytes, the slice is only
+// the database itself.
+// RawBytes 是一个字节串， 它持有一个引用， 该引用指向数据库自身拥有的内存。
+// After a Scan into a RawBytes, the slice is only
 // valid until the next call to Next, Scan, or Close.
+// 在 Scan 将结果储存到一个 RawBytes 之后， 该切片会在下一个 Next 、Scan 或者 Close 调用之前一直有效。
 type RawBytes []byte
 
 // NullString represents a string that may be null.
@@ -289,6 +300,7 @@ func (n NullFloat64) Value() (driver.Value, error) {
 // NullBool represents a bool that may be null.
 // NullBool implements the Scanner interface so
 // it can be used as a scan destination, similar to NullString.
+// NullBool 表示一个可能为 null 的布尔值。 NullBool 实现了 Scanner 接口， 因此它可以跟 NullString 一样用作扫描目的地（destination
 type NullBool struct {
 	Bool  bool
 	Valid bool // Valid is true if Bool is not NULL
@@ -390,27 +402,37 @@ var ErrNoRows = errors.New("sql: no rows in result set")
 // DB is a database handle representing a pool of zero or more
 // underlying connections. It's safe for concurrent use by multiple
 // goroutines.
+// DB 是一个数据库句柄， 它代表的是包含着零个或多个底层连接的池（pool）。
+// 多个 goroutine 可以安全地、并发地使用这个句柄。
 //
+// 如果数据库具有每个连接状态的概念，则可以在事务（Tx）或连接（Conn）中可靠地观察到这种状态。
 // The sql package creates and frees connections automatically; it
-// also maintains a free pool of idle connections. If the database has
-// a concept of per-connection state, such state can be reliably observed
-// within a transaction (Tx) or connection (Conn). Once DB.Begin is called, the
-// returned Tx is bound to a single connection. Once Commit or
+// also maintains a free pool of idle connections.
+// sql包 会自动地创建和释放连接， 并且它也会维护一个由闲置（idle）连接组成的释放池（free pool）。
+//
+// If the database has a concept of per-connection state, such state can be reliably observed
+// within a transaction (Tx) or connection (Conn).
+// 如果数据库拥有预连接状态（pre-connection state）这一概念， 那么这种状态只会在事务内部可见（observed）。
+//
+// Once DB.Begin is called, the returned Tx is bound to a single connection. Once Commit or
 // Rollback is called on the transaction, that transaction's
 // connection is returned to DB's idle connection pool. The pool size
 // can be controlled with SetMaxIdleConns.
+// 当 DB.Begin 被调用时， 它返回的 Tx 将与单个连接绑定， 而当事务提交或者回滚时， 这个连接将返回至 DB 的闲置连接池。
+// 闲置连接池的大小可以通过 SetMaxIdleConns 来控制。
 type DB struct {
 	// Atomic access only. At top of struct to prevent mis-alignment
 	// on 32-bit platforms. Of type time.Duration.
-	waitDuration int64 // Total time waited for new connections.
+	waitDuration int64 // Total time waited for new connections. 等待新连接的总时间
 
+	// 驱动的连接接口，实现了Driver方法和Connect方法
 	connector driver.Connector
 	// numClosed is an atomic counter which represents a total number of
 	// closed connections. Stmt.openStmt checks it before cleaning closed
 	// connections in Stmt.css.
 	numClosed uint64
 
-	mu           sync.Mutex // protects following fields
+	mu           sync.Mutex // protects following fields 互斥量，支持多线程操作
 	freeConn     []*driverConn
 	connRequests map[uint64]chan connRequest
 	nextRequest  uint64 // Next key to use in connRequests.
@@ -728,20 +750,28 @@ func OpenDB(c driver.Connector) *DB {
 // Open opens a database specified by its database driver name and a
 // driver-specific data source name, usually consisting of at least a
 // database name and connection information.
+// Open 函数会根据给定的数据库驱动以及驱动专属的数据源来打开一个数据库，
+// 驱动专属的数据源一般至少会包含数据库的名字以及相关的连接信息。
 //
 // Most users will open a database via a driver-specific connection
-// helper function that returns a *DB. No database drivers are included
-// in the Go standard library. See https://golang.org/s/sqldrivers for
-// a list of third-party drivers.
+// helper function that returns a *DB.
+// 大多数用户都会通过驱动专属的辅助函数来打开数据库， 这种函数会返回一个指向 DB 结构的指针。
+// No database drivers are included in the Go standard library.
+// See https://golang.org/s/sqldrivers for a list of third-party drivers.
+// Go 的标准库不包含任何数据库驱动， 所有数据库驱动都是第三方的，
+// https://golang.org/s/sqldrivers 列出了可用的第三方驱动。
 //
 // Open may just validate its arguments without creating a connection
 // to the database. To verify that the data source name is valid, call
 // Ping.
+// Open 有可能会只对参数进行检查， 但是却并不创建实际的数据库连接。通过调用 Ping 可以检查给定的数据源是否有效。
 //
 // The returned DB is safe for concurrent use by multiple goroutines
 // and maintains its own pool of idle connections. Thus, the Open
 // function should be called just once. It is rarely necessary to
 // close a DB.
+// Open 函数返回的 DB 可以安全地由多个 goroutine 进行并发使用， 并且 DB 也会维护它自有的闲置连接池。
+// 因此，Oepn 函数通常只需要调用一次， 并且用户通常不需要手动地关闭一个 DB 。
 func Open(driverName, dataSourceName string) (*DB, error) {
 	driversMu.RLock()
 	driveri, ok := drivers[driverName]
@@ -774,6 +804,7 @@ func (db *DB) pingDC(ctx context.Context, dc *driverConn, release func(error)) e
 
 // PingContext verifies a connection to the database is still alive,
 // establishing a connection if necessary.
+// PingContext验证与数据库的连接是否仍处于活动状态，并在必要时建立连接。
 func (db *DB) PingContext(ctx context.Context) error {
 	var dc *driverConn
 	var err error
@@ -796,6 +827,7 @@ func (db *DB) PingContext(ctx context.Context) error {
 
 // Ping verifies a connection to the database is still alive,
 // establishing a connection if necessary.
+// 检查数据库连接是否仍然有效， 并在有需要时建立一个连接。
 func (db *DB) Ping() error {
 	return db.PingContext(context.Background())
 }
@@ -853,9 +885,12 @@ func (db *DB) maxIdleConnsLocked() int {
 
 // SetMaxIdleConns sets the maximum number of connections in the idle
 // connection pool.
+// 设置闲置连接池里面最多可放置的连接数量。
 //
 // If MaxOpenConns is greater than 0 but less than the new MaxIdleConns,
 // then the new MaxIdleConns will be reduced to match the MaxOpenConns limit.
+// 如果 MaxOpenConns 大于 0 但小于新的 MaxIdleConns ，
+// 那么将 MaxIdleConns 的值设置为与 MaxOpenConns 一样。
 //
 // If n <= 0, no idle connections are retained.
 //
@@ -888,13 +923,16 @@ func (db *DB) SetMaxIdleConns(n int) {
 }
 
 // SetMaxOpenConns sets the maximum number of open connections to the database.
+// 设置最大可创建的数据库连接数量。
 //
 // If MaxIdleConns is greater than 0 and the new MaxOpenConns is less than
 // MaxIdleConns, then MaxIdleConns will be reduced to match the new
 // MaxOpenConns limit.
+// 如果 MaxIdleConns 大于 0 并且新的 MaxOpenConns 小于 MaxIdleConns ， 那么 MaxIdleConns 的值将设置为与 MaxOpenConns 一样。
 //
 // If n <= 0, then there is no limit on the number of open connections.
 // The default is 0 (unlimited).
+// 如果 n <= 0 ， 那么表示不限制数据库连接的数量。 默认值为 0 （无限制）。
 func (db *DB) SetMaxOpenConns(n int) {
 	db.mu.Lock()
 	db.maxOpen = n
@@ -909,10 +947,11 @@ func (db *DB) SetMaxOpenConns(n int) {
 }
 
 // SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-//
+// 设置可以重用连接的时长。
 // Expired connections may be closed lazily before reuse.
-//
+// 过期的连接可以在重用之前惰性地进行关闭。
 // If d <= 0, connections are reused forever.
+// 如果 d <= 0, 那么连接将一直可用
 func (db *DB) SetConnMaxLifetime(d time.Duration) {
 	if d < 0 {
 		d = 0
@@ -988,6 +1027,7 @@ func (db *DB) connectionCleaner(d time.Duration) {
 }
 
 // DBStats contains database statistics.
+// DBStats 包含了数据库的统计数据
 type DBStats struct {
 	MaxOpenConnections int // Maximum number of open connections to the database.
 
@@ -1004,6 +1044,7 @@ type DBStats struct {
 }
 
 // Stats returns database statistics.
+// 返回数据库的统计数据
 func (db *DB) Stats() DBStats {
 	wait := atomic.LoadInt64(&db.waitDuration)
 
@@ -1415,8 +1456,10 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 // Prepare creates a prepared statement for later queries or executions.
 // Multiple queries or executions may be run concurrently from the
 // returned statement.
+// 为之后的查询或执行（execution）创建预处理语句， 多个查询或者执行可以并发地使用 Prepare 返回的预处理语句.
 // The caller must call the statement's Close method
 // when the statement is no longer needed.
+// 当调用者不再需要这个预处理语句时， 它必须调用这个语句的 Close 方法。
 func (db *DB) Prepare(query string) (*Stmt, error) {
 	return db.PrepareContext(context.Background(), query)
 }
@@ -1487,6 +1530,7 @@ func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}
 
 // Exec executes a query without returning any rows.
 // The args are for any placeholder parameters in the query.
+// 执行指定的查询， 但不返回任何数据行。 方法的 arg 部分用于填写查询语句中包含的占位符的实际参数。
 func (db *DB) Exec(query string, args ...interface{}) (Result, error) {
 	return db.ExecContext(context.Background(), query, args...)
 }
@@ -1557,6 +1601,8 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 
 // Query executes a query that returns rows, typically a SELECT.
 // The args are for any placeholder parameters in the query.
+// 执行一个查询并返回多个数据行， 这个查询通常是一个 SELECT 。
+// 方法的 arg 部分用于填写查询语句中包含的占位符的实际参数。
 func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
 	return db.QueryContext(context.Background(), query, args...)
 }
@@ -1655,6 +1701,8 @@ func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interfa
 // If the query selects no rows, the *Row's Scan will return ErrNoRows.
 // Otherwise, the *Row's Scan scans the first selected row and discards
 // the rest.
+// 执行一个预期最多只会返回一个数据行的查询。
+// 这个方法总是会返回一个非空的值， 而它引起的错误则会被推延到数据行的 Scan 方法被调用为止。
 func (db *DB) QueryRow(query string, args ...interface{}) *Row {
 	return db.QueryRowContext(context.Background(), query, args...)
 }
@@ -1665,10 +1713,15 @@ func (db *DB) QueryRow(query string, args ...interface{}) *Row {
 // If the context is canceled, the sql package will roll back
 // the transaction. Tx.Commit will return an error if the context provided to
 // BeginTx is canceled.
+// 给定的上下文会一直使用到事务提交又或者回滚为止。
+// 如果上下文被取消了， 那么 sql 包将会对事务进行回滚。
+// Tx.Commit 在给定的上下文已被取消时会返回一个错误。
 //
 // The provided TxOptions is optional and may be nil if defaults should be used.
 // If a non-default isolation level is used that the driver doesn't support,
 // an error will be returned.
+// TxOptions 参数是可选的， 传入 nil 则表示使用默认值。
+// 如果用户尝试使用一种驱动不支持的非默认隔离级别， 那么方法将返回一个错误。
 func (db *DB) BeginTx(ctx context.Context, opts *TxOptions) (*Tx, error) {
 	var tx *Tx
 	var err error
@@ -1686,6 +1739,7 @@ func (db *DB) BeginTx(ctx context.Context, opts *TxOptions) (*Tx, error) {
 
 // Begin starts a transaction. The default isolation level is dependent on
 // the driver.
+// 开启一个事务，事务的隔离级别由驱动决定。
 func (db *DB) Begin() (*Tx, error) {
 	return db.BeginTx(context.Background(), nil)
 }
@@ -1725,6 +1779,7 @@ func (db *DB) beginDC(ctx context.Context, dc *driverConn, release func(error), 
 }
 
 // Driver returns the database's underlying driver.
+// 返回数据库的底层驱动。
 func (db *DB) Driver() driver.Driver {
 	return db.connector.Driver()
 }
@@ -2323,8 +2378,9 @@ type connStmt struct {
 	ds *driverStmt
 }
 
-// stmtConnGrabber represents a Tx or Conn that will return the underlying
-// driverConn and release function.
+// stmtConnGrabber (抢夺者) represents a Tx or Conn that will return
+// * the underlying driverConn
+// * and release function.
 type stmtConnGrabber interface {
 	// grabConn returns the driverConn and the associated release function
 	// that must be called when the operation completes.
@@ -2343,6 +2399,7 @@ var (
 
 // Stmt is a prepared statement.
 // A Stmt is safe for concurrent use by multiple goroutines.
+// Stmt 用于代表预处理语句， 多个 goroutine 可以安全地以并发的形式使用这种类型。
 //
 // If a Stmt is prepared on a Tx or Conn, it will be bound to a single
 // underlying connection forever. If the Tx or Conn closes, the Stmt will
@@ -2873,6 +2930,7 @@ func (rs *Rows) ColumnTypes() ([]*ColumnType, error) {
 }
 
 // ColumnType contains the name and type of a column.
+// ColumnType 包含了数据列的名字以及类型
 type ColumnType struct {
 	name string
 
@@ -3101,6 +3159,9 @@ type Row struct {
 // If more than one row matches the query,
 // Scan uses the first row and discards the rest. If no row matches
 // the query, Scan returns ErrNoRows.
+// Scan 会将被匹配数据行中的各个列复制到 dest 指向的值里面， 更多细节请参考 Rows.Scan 方法的文档。
+// 如果有多个数据行与查询匹配， 那么 Scan 将使用第一个数据行并丢弃其他所有数据行。
+// 如果没有任何数据行与查询匹配， 那么 Scan 将返回 ErrNoRows 。
 func (r *Row) Scan(dest ...interface{}) error {
 	if r.err != nil {
 		return r.err

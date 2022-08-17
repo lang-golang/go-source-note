@@ -43,7 +43,7 @@ import (
 //
 // Floating point, integer, and Number values encode as JSON numbers.
 //
-// String values encode as JSON strings coerced to valid UTF-8,
+// String values encode as JSON strings coerced(强迫) to valid UTF-8,
 // replacing invalid bytes with the Unicode replacement rune.
 // So that the JSON will be safe to embed inside HTML <script> tags,
 // the string is encoded using HTMLEscape,
@@ -72,7 +72,7 @@ import (
 // false, 0, a nil pointer, a nil interface value, and any empty array,
 // slice, map, or string.
 //
-// As a special case, if the field tag is "-", the field is always omitted.
+// As a special case, if the field tag is "-", the field is always omitted(忽略).
 // Note that a field with name "-" can still be generated using the tag "-,".
 //
 // Examples of struct field tags and their meanings:
@@ -276,7 +276,7 @@ var hex = "0123456789abcdef"
 
 // An encodeState encodes JSON into a bytes.Buffer.
 type encodeState struct {
-	bytes.Buffer // accumulated output
+	bytes.Buffer // accumulated(累积的) output
 	scratch      [64]byte
 }
 
@@ -337,9 +337,10 @@ func (e *encodeState) reflectValue(v reflect.Value, opts encOpts) {
 	valueEncoder(v)(e, v, opts)
 }
 
+// encode options
 type encOpts struct {
 	// quoted causes primitive fields to be encoded inside JSON strings.
-	quoted bool
+	quoted bool // TODO
 	// escapeHTML causes '<', '>', and '&' to be escaped in JSON strings.
 	escapeHTML bool
 }

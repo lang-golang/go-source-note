@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package url parses URLs and implements query escaping.
+// Package url parses URLs and implements query escaping(转义).
 package url
 
 // See RFC 3986. This package generally follows RFC 3986, except where

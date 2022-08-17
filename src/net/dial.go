@@ -681,7 +681,7 @@ type sysListener struct {
 	network, address string
 }
 
-// Listen announces on the local network address.
+// Listen announces on the local network address. (收听本地网络地址上的广播)
 //
 // The network must be "tcp", "tcp4", "tcp6", "unix" or "unixpacket".
 //

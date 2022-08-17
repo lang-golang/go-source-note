@@ -15,12 +15,14 @@ import (
 //
 // Various implementations of ValueConverter are provided by the
 // driver package to provide consistent implementations of conversions
-// between drivers. The ValueConverters have several uses:
+// between drivers.
+// The ValueConverters have several uses:
 //
 //  * converting from the Value types as provided by the sql package
 //    into a database table's specific column type and making sure it
 //    fits, such as making sure a particular int64 fits in a
 //    table's uint16 column.
+//	  将SqlPackage里的类型的变量转换成
 //
 //  * converting a value as given from the database into one of the
 //    driver Value types.
@@ -98,7 +100,7 @@ func (boolType) ConvertValue(src interface{}) (Value, error) {
 }
 
 // Int32 is a ValueConverter that converts input values to int64,
-// respecting the limits of an int32 value.
+// respecting the limits of an int32 value. 遵守int32值的限制
 var Int32 int32Type
 
 type int32Type struct{}
@@ -147,7 +149,7 @@ func (stringType) ConvertValue(v interface{}) (Value, error) {
 }
 
 // Null is a type that implements ValueConverter by allowing nil
-// values but otherwise delegating to another ValueConverter.
+// values but otherwise delegating to(把...委托...) another ValueConverter.
 type Null struct {
 	Converter ValueConverter
 }

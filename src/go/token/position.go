@@ -13,7 +13,7 @@ import (
 // -----------------------------------------------------------------------------
 // Positions
 
-// Position describes an arbitrary source position
+// Position describes an arbitrary(任意) source position
 // including the file, line, and column location.
 // A Position is valid if the line number is > 0.
 //
@@ -53,25 +53,25 @@ func (pos Position) String() string {
 	return s
 }
 
-// Pos is a compact encoding of a source position within a file set.
+// Pos is a compact(紧密的) encoding of a source position within(在内部) a file set.
 // It can be converted into a Position for a more convenient, but much
 // larger, representation.
 //
 // The Pos value for a given file is a number in the range [base, base+size],
 // where base and size are specified when adding the file to the file set via
-// AddFile.
+// AddFile. 对于一个file来说, Pos 是 [base, base+size] 之间的一个number
 //
 // To create the Pos value for a specific source offset (measured in bytes),
-// first add the respective file to the current file set using FileSet.AddFile
-// and then call File.Pos(offset) for that file. Given a Pos value p
-// for a specific file set fset, the corresponding Position value is
-// obtained by calling fset.Position(p).
+// first add the respective file to the current file set using FileSet.AddFile and then call File.Pos(offset) for that file.
+// Given a Pos value p for a specific file set fset, the corresponding Position value is obtained by calling fset.Position(p).
 //
 // Pos values can be compared directly with the usual comparison operators:
 // If two Pos values p and q are in the same file, comparing p and q is
 // equivalent to comparing the respective source file offsets. If p and q
 // are in different files, p < q is true if the file implied by p was added
 // to the respective file set before the file implied by q.
+// Pos 在同文件中的比较
+// Pos 在不同文件中的比较
 //
 type Pos int
 
@@ -140,7 +140,7 @@ func (f *File) AddLine(offset int) {
 	f.mutex.Unlock()
 }
 
-// MergeLine merges a line with the following line. It is akin to replacing
+// MergeLine merges a line with the following line. It is akin to(类似于) replacing
 // the newline character at the end of the line with a space (to not change the
 // remaining offsets). To obtain the line number, consult e.g. Position.Line.
 // MergeLine will panic if given an invalid line number.
@@ -224,8 +224,8 @@ func (f *File) LineStart(line int) Pos {
 	return Pos(f.base + f.lines[line-1])
 }
 
-// A lineInfo object describes alternative file, line, and column
-// number information (such as provided via a //line directive)
+// A lineInfo object describes alternative(可供替代的;非传统的) file, line, and column
+// number information (such as provided via a //line directive 指令)
 // for a given file offset.
 type lineInfo struct {
 	// fields are exported to make them accessible to gob
@@ -241,7 +241,7 @@ func (f *File) AddLineInfo(offset int, filename string, line int) {
 	f.AddLineColumnInfo(offset, filename, line, 1)
 }
 
-// AddLineColumnInfo adds alternative file, line, and column number
+// AddLineColumnInfo adds alternative(可供替代的;非传统的) file, line, and column number
 // information for a given file offset. The offset must be larger
 // than the offset for the previously added alternative line info
 // and smaller than the file size; otherwise the information is
