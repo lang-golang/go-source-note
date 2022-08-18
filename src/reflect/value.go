@@ -183,6 +183,8 @@ type emptyInterface struct {
 	word unsafe.Pointer
 }
 
+// 静态类型（static interface type）和动态混合类型（dynamic concrete type）
+// Go语言中，每个变量都有唯一个 静态类型 ，这个类型是编译阶段就可以确定的。有的变量可能除了静态类型之外，还会有 动态混合类型 。
 // nonEmptyInterface is the header for an interface value with methods.
 type nonEmptyInterface struct {
 	// see ../runtime/iface.go:/Itab
